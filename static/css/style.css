@@ -1,0 +1,15 @@
+/* CRIME404 shared interface details */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: #E8E9DF; }
+::-webkit-scrollbar-thumb { background: #AAB8A8; border-radius: 8px; }
+.timeline-item { position: relative; }
+.timeline-item::before { content: ''; position: absolute; left: -19px; top: 24px; bottom: -20px; width: 2px; background-color: #D3D9CE; }
+.timeline-item:last-child::before { display: none; }
+.graph-node { transition: all .3s ease; cursor: pointer; }
+.graph-node:hover { filter: drop-shadow(0 0 8px rgba(96,119,99,.35)); }
+.graph-edge { stroke-dasharray: 4; animation: dashAnimation 25s linear infinite; }
+@keyframes dashAnimation { to { stroke-dashoffset: -100; } }
+/* Normalized UTC Event Timeline contrast fix */
+#timeline-container > .bg-slate-950 { background-color: #EEF0E8 !important; color: #202A27 !important; }
+#timeline-container .text-slate-100, #timeline-container .text-slate-300 { color: #202A27 !important; }
+#timeline-container .text-slate-400 { color: #46564C !important; }
