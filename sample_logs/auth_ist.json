@@ -1,0 +1,27 @@
+[
+  {
+    "timestamp": "2026-11-12T23:52:10+05:30",
+    "src_ip": "10.0.4.22",
+    "user": "admin",
+    "message": "Failed password for user=admin from 10.0.4.22"
+  },
+  {
+    "timestamp": "2026-11-12T23:52:19+05:30",
+    "src_ip": "10.0.4.22",
+    "user": "admin",
+    "message": "Failed password for user=admin from 10.0.4.22"
+  },
+  {
+    "timestamp": "2026-11-12T23:53:05+05:30",
+    "src_ip": "10.0.4.22",
+    "user": "dev_ops",
+    "message": "Accepted password for user=dev_ops from 10.0.4.22"
+  },
+  {
+    "timestamp": "2026-11-12T23:56:40+05:30",
+    "src_ip": "10.0.4.22",
+    "user": "dev_ops",
+    "process": "payload.ps1",
+    "message": "sudo executed payload.ps1 by user=dev_ops from 10.0.4.22"
+  }
+]

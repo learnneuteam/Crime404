@@ -1,0 +1,2 @@
+timestamp,src_ip,dst_ip,user,file,message
+2026-11-12T18:44:20Z,10.0.4.22,185.220.101.4,dev_ops,payroll_backup.zip,Outbound transfer of payroll_backup.zip from 10.0.4.22 to 185.220.101.4 by user=dev_ops
