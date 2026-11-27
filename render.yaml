@@ -1,0 +1,22 @@
+services:
+  - type: web
+    name: crime404
+    runtime: python
+    plan: starter
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn app:app --workers 1 --threads 4 --timeout 120
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.10
+      - key: CRIME404_DATA_DIR
+        value: /var/data
+      - key: CRIME404_FORCE_HTTPS
+        value: "1"
+      - key: CRIME404_COOKIE_SECURE
+        value: "1"
+      - key: SECRET_KEY
+        generateValue: true
+    disk:
+      name: crime404-data
+      mountPath: /var/data
+      sizeGB: 1
