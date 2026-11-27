@@ -1,0 +1,7 @@
+# CRIME404 Sample Forensic Artifact - Part 1 (Initial Auth & DB Logs)
+02:14:05 Failed login attempt for user=admin from 192.168.1.104
+02:14:12 Failed login attempt for user=admin from 192.168.1.104
+02:14:19 Failed login attempt for user=admin from 192.168.1.104
+02:14:42 Accepted password for user=usr_admin02 from 192.168.1.104
+02:18:10 SQL dump query executed by user=usr_admin02 on customer_records.sql
+02:35:00 Session terminated for user=usr_admin02 from 192.168.1.104

@@ -1,0 +1,27 @@
+[
+  {
+    "timestamp": "2026-11-12T23:52:10+05:30",
+    "src_ip": "10.0.4.22",
+    "username": "admin",
+    "event": "Failed login attempt via SSH"
+  },
+  {
+    "timestamp": "2026-11-12T23:52:19+05:30",
+    "src_ip": "10.0.4.22",
+    "username": "admin",
+    "event": "Failed login attempt via SSH"
+  },
+  {
+    "timestamp": "2026-11-12T23:53:05+05:30",
+    "src_ip": "10.0.4.22",
+    "username": "dev_ops",
+    "event": "Accepted password for SSH session"
+  },
+  {
+    "timestamp": "2026-11-12T23:56:40+05:30",
+    "src_ip": "10.0.4.22",
+    "username": "dev_ops",
+    "process": "payload.ps1",
+    "event": "Privilege escalation via sudo to root executing payload.ps1"
+  }
+]

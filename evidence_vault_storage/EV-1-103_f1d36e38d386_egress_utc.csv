@@ -1,0 +1,2 @@
+timestamp,src_ip,dest_ip,username,target_file,action
+2026-11-12T18:44:20Z,10.0.4.22,185.220.101.4,dev_ops,payroll_backup.zip,Outbound encrypted transfer of payroll_backup.zip
