@@ -221,3 +221,39 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# ===== CRIME 404 - Deployment exclusions =====
+
+# Python virtual environments
+venv/
+.venv/
+venv_biometric/
+venv.biometric/
+
+# Python cache
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
+# Local environment and secrets
+.env
+.env.*
+!.env.example
+
+# Local databases
+*.db
+*.sqlite
+*.sqlite3
+*.db-shm
+*.db-wal
+
+# CRIME 404 local storage
+instance/
+evidence_vault_storage/
+backups_isolated/
+keys_isolated/
+
+# Local logs and temporary files
+*.log
+.DS_Store
+Thumbs.db
