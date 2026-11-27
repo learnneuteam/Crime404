@@ -18,4 +18,4 @@ webauthn
 pytest>=8.0.0
 numpy
 opencv-python-headless
-gunicorn app:app
+gunicorn
