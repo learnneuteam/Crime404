@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CRIME404 | Team Invitations</title><script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/theme.css') }}">
+</head>
+<body class="min-h-screen bg-[#070b14] text-slate-200 p-4 sm:p-8">
+  <main class="max-w-4xl mx-auto space-y-6">
+    <header><p class="text-xs uppercase tracking-widest text-sky-400">Organisation</p><h1 class="text-2xl font-bold text-white mt-1">Team Invitations</h1><p class="text-sm text-slate-400 mt-2">Create secure, time-limited links. Invitees receive the role selected here when they register.</p></header>
+    <section class="rounded-2xl border border-slate-800 bg-[#0f172a] p-5 space-y-4">
+      <h2 class="font-semibold text-white">Create invitation link</h2>
+      <div class="grid sm:grid-cols-3 gap-3">
+        <label class="text-xs text-slate-400">Assigned role<select id="invite-role" class="mt-1 block w-full rounded-lg bg-slate-950 border border-slate-700 p-2.5 text-sm text-white"><option value="investigator">Investigator</option><option value="lead_investigator">Lead Investigator</option><option value="evidence_reviewer">Evidence Reviewer</option><option value="read_only_auditor">Read-Only Auditor</option></select></label>
+        <label class="text-xs text-slate-400">Expires in<select id="invite-hours" class="mt-1 block w-full rounded-lg bg-slate-950 border border-slate-700 p-2.5 text-sm text-white"><option value="24">24 hours</option><option value="48" selected>48 hours</option><option value="72">3 days</option><option value="168">7 days</option></select></label>
+        <label class="text-xs text-slate-400">Maximum uses<input id="invite-uses" type="number" min="1" max="50" value="1" class="mt-1 block w-full rounded-lg bg-slate-950 border border-slate-700 p-2.5 text-sm text-white"></label>
+      </div>
+      <button id="create-invite" class="rounded-lg bg-sky-600 hover:bg-sky-500 px-4 py-2.5 text-sm font-semibold text-white">Generate invitation link</button>
+      <p id="invite-status" class="text-xs text-slate-400" aria-live="polite"></p>
+      <div id="new-link" class="hidden rounded-lg bg-slate-950 border border-emerald-700/50 p-3"><p class="text-xs text-emerald-300 mb-2">Invitation created</p><div class="flex flex-col sm:flex-row gap-2"><input id="invite-url" readonly class="min-w-0 flex-1 bg-slate-900 border border-slate-700 rounded p-2 text-xs text-white"><button id="copy-link" class="rounded bg-emerald-700 px-3 py-2 text-xs font-semibold">Copy link</button></div></div>
+    </section>
+    <section class="rounded-2xl border border-slate-800 bg-[#0f172a] p-5 space-y-3"><div class="flex items-center justify-between"><h2 class="font-semibold text-white">Active invitation links</h2><button id="refresh-invites" class="text-xs text-sky-400 hover:underline">Refresh</button></div><div id="invite-list" class="space-y-2"><p class="text-xs text-slate-500">Loading invitations…</p></div></section>
+    <a href="/" class="text-xs text-sky-400 hover:underline">← Back to CRIME404</a>
+  </main>
+<script>
+const csrf = {{ csrf_token()|tojson }};
+const statusEl = document.getElementById('invite-status');
+const listEl = document.getElementById('invite-list');
+async function api(url, options={}) {
+  const headers = {...(options.headers || {}), 'X-CSRF-Token': csrf};
+  if (options.body) headers['Content-Type'] = 'application/json';
+  const response = await fetch(url, {...options, headers});
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(data.error || `Request failed (${response.status})`);
+  return data;
+}
+function esc(value) { const el=document.createElement('span'); el.textContent=value ?? ''; return el.innerHTML; }
+async function loadInvites() {
+  listEl.innerHTML = '<p class="text-xs text-slate-500">Loading…</p>';
+  try {
+    const data = await api('/api/org/invites');
+    if (!data.invites?.length) { listEl.innerHTML='<p class="text-xs text-slate-500">No active invitation links yet.</p>'; return; }
+    listEl.innerHTML = data.invites.map(inv => `<div class="rounded-lg border border-slate-800 bg-slate-950 p-3 flex flex-col sm:flex-row sm:items-center gap-3"><div class="min-w-0 flex-1"><p class="text-sm font-semibold text-white">${esc(inv.assigned_role.replaceAll('_',' '))}</p><p class="text-[11px] text-slate-400">${esc(inv.uses_count)} / ${esc(inv.max_uses)} uses · Expires ${esc(inv.expires_at)}</p><p class="text-xs text-sky-300 break-all mt-1">${esc(inv.invite_url)}</p></div><div class="flex gap-2"><button data-copy="${esc(inv.invite_url)}" class="copy-existing rounded bg-slate-800 px-3 py-2 text-xs">Copy</button><button data-revoke="${inv.id}" class="revoke rounded bg-rose-900/70 px-3 py-2 text-xs text-rose-200">Revoke</button></div></div>`).join('');
+    document.querySelectorAll('.copy-existing').forEach(b => b.addEventListener('click', async () => { await navigator.clipboard.writeText(b.dataset.copy); b.textContent='Copied'; }));
+    document.querySelectorAll('.revoke').forEach(b => b.addEventListener('click', async () => { if (!confirm('Revoke this invitation link?')) return; try { await api(`/api/org/invites/${b.dataset.revoke}`, {method:'DELETE'}); await loadInvites(); } catch(e) { statusEl.textContent=e.message; } }));
+  } catch (e) { listEl.innerHTML=`<p class="text-xs text-rose-300">${esc(e.message)}</p>`; }
+}
+document.getElementById('create-invite').addEventListener('click', async () => {
+  statusEl.textContent='Creating invitation…';
+  try {
+    const data=await api('/api/org/invites',{method:'POST',body:JSON.stringify({role:document.getElementById('invite-role').value,expires_hours:Number(document.getElementById('invite-hours').value),max_uses:Number(document.getElementById('invite-uses').value)})});
+    document.getElementById('invite-url').value=data.invite.invite_url;
+    document.getElementById('new-link').classList.remove('hidden');
+    statusEl.textContent='Invitation link created successfully.';
+    await loadInvites();
+  } catch(e) { statusEl.textContent=e.message; }
+});
+document.getElementById('copy-link').addEventListener('click', async () => { const v=document.getElementById('invite-url').value; await navigator.clipboard.writeText(v); document.getElementById('copy-link').textContent='Copied!'; });
+document.getElementById('refresh-invites').addEventListener('click', loadInvites);
+loadInvites();
+</script>
+</body></html>

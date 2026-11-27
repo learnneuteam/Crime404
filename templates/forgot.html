@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    <meta charset="UTF-8">
+    <title>CRIME404 - Reset Password</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: { colors: { darkbg: '#E8E9DF', cardbg: '#F5F5EF', bordercolor: '#D3D9CE', accentcyan: '#607763' } }
+            }
+        }
+    </script>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/theme.css') }}">
+</head>
+<body class="bg-darkbg text-slate-200 font-sans min-h-screen flex items-center justify-center p-4">
+
+    <div class="w-full max-w-md bg-cardbg border border-bordercolor rounded-xl p-8 shadow-2xl">
+        <div class="text-center mb-6">
+            <div class="flex items-center justify-center space-x-3 text-accentcyan font-mono font-bold text-3xl tracking-wider mb-2">
+                <i class="fa-solid fa-key"></i>
+                <span>CRIME404</span>
+            </div>
+            <p class="text-xs text-slate-400 font-mono">Password Recovery via Gmail</p>
+        </div>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            {% for category, message in messages %}
+              <div class="mb-4 p-3 text-xs rounded border bg-slate-900 font-mono text-center
+                {% if category == 'danger' %} border-red-500/40 text-red-400 {% elif category == 'info' %} border-cyan-500/40 text-cyan-400 {% else %} border-amber-500/40 text-amber-400 {% endif %}">
+                {{ message }}
+              </div>
+            {% endfor %}
+          {% endif %}
+        {% endwith %}
+
+        <form action="/forgot-password" method="POST" class="space-y-4">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <div>
+                <label class="block text-xs font-mono text-slate-400 uppercase mb-2">Enter Registered Gmail</label>
+                <input type="email" name="email" required placeholder="Enter your registered email address" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3.5 py-2 text-sm text-slate-200 focus:outline-none focus:border-accentcyan">
+            </div>
+
+            <button type="submit" class="w-full bg-accentcyan hover:bg-cyan-600 text-slate-950 font-semibold py-2.5 rounded-lg text-sm transition font-mono tracking-wider">
+                SEND RESET MAIL
+            </button>
+        </form>
+
+        <div class="mt-6 text-center text-xs text-slate-400">
+            Remember password? <a href="/login" class="text-accentcyan hover:underline font-semibold">Back to Login</a>
+        </div>
+    </div>
+
+</body>
+</html>

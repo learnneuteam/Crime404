@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CRIME404 | Investigator Sign In</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/theme.css') }}">
+</head>
+<body class="min-h-screen bg-[#070b14] text-slate-200 flex items-center justify-center p-4">
+  <div class="w-full max-w-md bg-[#0f172a] border border-slate-800 rounded-2xl p-6 space-y-5 shadow-2xl">
+    <div class="flex items-center gap-3">
+      <div class="w-10 h-10 rounded-xl bg-sky-500/15 border border-sky-500/40 grid place-items-center text-sky-400 font-black">404</div>
+      <div>
+        <h1 class="font-bold text-lg text-white">CRIME<span class="text-sky-400">404</span> Authentication</h1>
+        <p class="text-xs text-slate-400">Digital Forensic Investigation System</p>
+      </div>
+    </div>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <div class="space-y-2">
+          {% for category, message in messages %}
+            <div class="p-3 rounded-xl text-xs border {% if category == 'danger' %}bg-rose-950/50 border-rose-500/40 text-rose-200{% elif category == 'warning' %}bg-amber-950/50 border-amber-500/40 text-amber-200{% else %}bg-sky-950/50 border-sky-500/40 text-sky-200{% endif %}">
+              {{ message }}
+            </div>
+          {% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
+
+    <form id="login-form" method="POST" action="{{ url_for('login') }}" class="space-y-4">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <input type="hidden" name="face_image" id="login-face-image" value="">
+
+      <div>
+        <label class="text-xs text-slate-400">Investigator Username or Email</label>
+        <input name="username" required value="{{ prefill_username or '' }}" class="mt-1 w-full bg-[#090d16] border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:border-sky-400 outline-none" placeholder="investigator_id or email">
+      </div>
+
+      <div>
+        <label class="text-xs text-slate-400">Passphrase</label>
+        <input type="password" name="password" required class="mt-1 w-full bg-[#090d16] border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:border-sky-400 outline-none" placeholder="••••••••••••">
+      </div>
+
+      <div>
+        <label class="text-xs text-slate-400">Authenticator / Recovery Code (if MFA enabled)</label>
+        <input name="mfa_code" class="mt-1 w-full bg-[#090d16] border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:border-sky-400 outline-none" placeholder="Optional 6-digit TOTP or recovery code">
+      </div>
+
+      <!-- Live Face Verification Panel for Login -->
+      <div class="p-3 rounded-xl bg-slate-950 border border-slate-800 space-y-2">
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-semibold text-sky-300">Live Face Identity Check</span>
+          <button type="button" id="login-cam-btn" onclick="startLoginCamera()" class="px-2.5 py-1 rounded-lg bg-sky-600 hover:bg-sky-500 text-white text-[11px] font-semibold">Enable Camera</button>
+        </div>
+        <video id="login-video" autoplay muted playsinline class="hidden w-full h-44 object-cover rounded-lg border border-slate-700 bg-black" style="transform:scaleX(-1);"></video>
+        <div id="login-face-status" class="text-[11px] text-slate-400">
+          {% if face_required %}
+            Camera frame required: click "Enable Camera" or submit to automatically capture your live face frame.
+          {% else %}
+            Accounts with enrolled face templates automatically capture a live verification frame upon sign-in.
+          {% endif %}
+        </div>
+      </div>
+
+      <button type="submit" id="login-submit-btn" class="w-full py-2.5 rounded-xl bg-sky-600 hover:bg-sky-500 text-white text-sm font-semibold transition">
+        Sign In to Investigation Workspace
+      </button>
+    </form>
+
+    <div class="flex items-center justify-between text-xs text-slate-400 pt-2 border-t border-slate-800">
+      <a href="{{ url_for('signup') }}" class="text-sky-400 hover:underline">Register Investigator Account</a>
+      <a href="{{ url_for('forgot_password') }}" class="hover:text-slate-200">Forgot Password?</a>
+    </div>
+  </div>
+
+<script>
+let loginStream = null;
+async function startLoginCamera() {
+  const video = document.getElementById("login-video");
+  const st = document.getElementById("login-face-status");
+  if (!navigator.mediaDevices?.getUserMedia) {
+    st.textContent = "Camera unavailable: open CRIME404 via http://localhost:5000 or HTTPS.";
+    return null;
+  }
+  if (!loginStream) {
+    loginStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user", width: 640, height: 480 }, audio: false });
+    video.srcObject = loginStream;
+    video.classList.remove("hidden");
+    await new Promise((r) => (video.onloadedmetadata = r));
+    await video.play();
+    await new Promise((r) => setTimeout(r, 450));
+  }
+  st.textContent = "Camera ready — live frame will be verified upon sign-in.";
+  return video;
+}
+
+document.getElementById("login-form").addEventListener("submit", async function (e) {
+  const faceField = document.getElementById("login-face-image");
+  if (faceField.value) return;
+  e.preventDefault();
+  const btn = document.getElementById("login-submit-btn");
+  const st = document.getElementById("login-face-status");
+  btn.disabled = true;
+  btn.textContent = "Capturing Live Face & Signing In…";
+  try {
+    const video = await startLoginCamera();
+    if (video && video.videoWidth) {
+      const canvas = document.createElement("canvas");
+      canvas.width = video.videoWidth || 640;
+      canvas.height = video.videoHeight || 480;
+      canvas.getContext("2d").drawImage(video, 0, 0, canvas.width, canvas.height);
+      faceField.value = canvas.toDataURL("image/jpeg", 0.9);
+    }
+  } catch (err) {
+    st.textContent = "Proceeding without camera frame (" + err.message + ")";
+  } finally {
+    if (loginStream) loginStream.getTracks().forEach((t) => t.stop());
+    e.target.submit();
+  }
+});
+</script>
+</body>
+</html>

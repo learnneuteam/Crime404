@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CRIME404 - Register Investigator</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script>
+    tailwind.config = { theme: { extend: { colors: { darkbg: '#E8E9DF', cardbg: '#F5F5EF', bordercolor: '#D3D9CE', accentcyan: '#607763' } } } };
+  </script>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/theme.css') }}">
+</head>
+<body class="bg-darkbg text-slate-200 font-sans min-h-screen flex items-center justify-center p-4">
+  <main class="w-full max-w-xl bg-cardbg border border-bordercolor rounded-xl p-6 sm:p-8 shadow-2xl">
+    <header class="text-center mb-6">
+      <div class="flex items-center justify-center gap-3 text-accentcyan font-mono font-bold text-3xl tracking-wider mb-2">
+        <i class="fa-solid fa-user-plus"></i><span>CRIME404</span>
+      </div>
+      <p class="text-xs text-slate-400 font-mono">Create Investigator Account</p>
+    </header>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}<div class="mb-4 space-y-2">
+        {% for category, message in messages %}
+          <div class="p-3 text-xs rounded border bg-slate-900 font-mono text-center {% if category == 'danger' %}border-red-500/40 text-red-400{% elif category == 'success' %}border-emerald-500/40 text-emerald-400{% else %}border-amber-500/40 text-amber-400{% endif %}">{{ message }}</div>
+        {% endfor %}
+      </div>{% endif %}
+    {% endwith %}
+
+    {% if invited_role %}
+      <div class="mb-4 p-3 rounded-lg border border-emerald-500/40 bg-emerald-950/30 text-sm">
+        <div class="font-semibold text-emerald-300"><i class="fa-solid fa-link mr-1"></i> Team invitation detected</div>
+        <p class="text-xs text-slate-300 mt-1">You are registering to join {{ invited_by }}'s team as <strong>{{ invited_role.replace('_', ' ')|title }}</strong>. This invitation determines your organisation and role.</p>
+      </div>
+    {% endif %}
+
+    <form id="signup-form" action="{{ url_for('signup') }}" method="POST" class="space-y-4">
+      {% if csrf_token is defined %}<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">{% endif %}
+      <input type="hidden" name="face_samples" id="face-samples" value="[]">
+      {% if invited_role %}<input type="hidden" name="role" value="{{ invited_role }}">{% endif %}
+
+      <div>
+        <label class="block text-xs font-mono text-slate-400 uppercase mb-1.5">Organization / Forensic Unit</label>
+        <input type="text" name="org_name" value="{{ prefill_org or '' }}" {% if invited_role %}readonly{% endif %} placeholder="Enter organization or unit name (optional)" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3.5 py-2 text-sm text-slate-200 focus:outline-none focus:border-accentcyan">
+      </div>
+
+      <div>
+        <label class="block text-xs font-mono text-slate-400 uppercase mb-1.5">Select Your Role</label>
+        {% if not invited_role %}
+          <select name="role" id="su-role" required class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3.5 py-2 text-sm text-slate-200 focus:outline-none focus:border-accentcyan">
+            <option value="investigator" selected>Investigator — Upload &amp; Analyze Evidence</option>
+            <option value="lead_investigator">Lead Investigator — Manage Cases &amp; Approve</option>
+            <option value="evidence_reviewer">Evidence Reviewer — Verify &amp; Approve</option>
+            <option value="read_only_auditor">Read-Only Auditor — View &amp; Verify Logs</option>
+          </select>
+          <p id="role-hint" class="text-[11px] text-slate-400 mt-1">Lead Investigator is available during registration. The first account is automatically assigned this role to establish the organisation. Subsequent accounts receive the role selected here; a valid team invitation overrides the selected role and organisation.</p>
+        {% else %}
+          <input type="text" readonly value="{{ invited_role.replace('_', ' ')|title }}" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3.5 py-2 text-sm text-emerald-300">
+        {% endif %}
+      </div>
+
+      <div>
+        <label class="block text-xs font-mono text-slate-400 uppercase mb-1.5">Investigator ID / Username</label>
+        <input type="text" name="username" value="{{ prefill_username or '' }}" required autocomplete="username" placeholder="Choose a unique username" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3.5 py-2 text-sm text-slate-200 focus:outline-none focus:border-accentcyan">
+      </div>
+      <div>
+        <label class="block text-xs font-mono text-slate-400 uppercase mb-1.5">Registered Email</label>
+        <input type="email" name="email" value="{{ prefill_email or '' }}" required autocomplete="email" placeholder="Enter your email address" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3.5 py-2 text-sm text-slate-200 focus:outline-none focus:border-accentcyan">
+      </div>
+      <div>
+        <label class="block text-xs font-mono text-slate-400 uppercase mb-1.5">Password (Min 12 characters)</label>
+        <input type="password" name="password" minlength="12" required autocomplete="new-password" placeholder="Create a passphrase (min 12 characters)" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3.5 py-2 text-sm text-slate-200 focus:outline-none focus:border-accentcyan">
+        <p class="text-[11px] text-slate-500 mt-1">Stored using the configured password hashing system.</p>
+      </div>
+
+      <section class="p-4 rounded-xl bg-slate-950 border border-slate-800 space-y-3">
+        <div class="flex items-center justify-between gap-2">
+          <div>
+            <h2 class="text-sm font-semibold text-sky-300"><i class="fa-solid fa-user-shield mr-1"></i> Face Recognition Enrollment</h2>
+            <p class="text-[11px] text-slate-400 mt-1">Capture three live face samples to enrol your encrypted face template.</p>
+          </div>
+          <span id="capture-count" class="text-xs font-mono text-slate-300">0 / 3</span>
+        </div>
+        <video id="signup-video" autoplay muted playsinline class="hidden w-full h-56 object-cover rounded-lg border border-slate-700 bg-black" style="transform:scaleX(-1)"></video>
+        <div id="camera-status" class="text-xs text-slate-400" aria-live="polite">Camera access is required for face enrollment. Use localhost or HTTPS.</div>
+        <div class="flex flex-wrap gap-2">
+          <button type="button" id="start-camera" class="px-3 py-2 rounded-lg bg-sky-700 hover:bg-sky-600 text-white text-xs font-semibold"><i class="fa-solid fa-camera mr-1"></i> Enable Camera</button>
+          <button type="button" id="capture-face" disabled class="px-3 py-2 rounded-lg bg-cyan-600 hover:bg-cyan-500 disabled:opacity-40 disabled:cursor-not-allowed text-slate-950 text-xs font-semibold">Capture Face Sample</button>
+          <button type="button" id="reset-captures" class="px-3 py-2 rounded-lg border border-slate-700 hover:bg-slate-800 text-slate-300 text-xs">Reset Samples</button>
+        </div>
+        <div class="h-1.5 bg-slate-800 rounded-full overflow-hidden"><div id="capture-progress" class="h-full bg-cyan-400 rounded-full" style="width:0%"></div></div>
+        <label class="flex items-start gap-2 text-xs text-slate-300">
+          <input type="checkbox" name="biometric_consent" value="yes" required class="mt-0.5 accent-cyan-400">
+          <span>I consent to CRIME404 capturing these face samples and storing an encrypted biometric template for identity verification. I understand this is used for sign-in and applicable security checks.</span>
+        </label>
+        {% if not face_supported %}<p class="text-xs text-rose-300">Face recognition service is unavailable on the server. Registration will remain unavailable until the biometric dependencies are installed.</p>{% endif %}
+      </section>
+
+      <button type="submit" id="signup-submit" class="w-full bg-accentcyan hover:bg-cyan-600 text-slate-950 font-semibold py-2.5 rounded-lg text-sm transition font-mono tracking-wider">CREATE ACCOUNT</button>
+    </form>
+    <div class="mt-6 text-center text-xs text-slate-400">Already registered? <a href="{{ url_for('login') }}" class="text-accentcyan hover:underline font-semibold">Sign in</a></div>
+  </main>
+
+<script>
+(() => {
+  const form = document.getElementById('signup-form');
+  const video = document.getElementById('signup-video');
+  const samplesField = document.getElementById('face-samples');
+  const status = document.getElementById('camera-status');
+  const count = document.getElementById('capture-count');
+  const progress = document.getElementById('capture-progress');
+  const captureBtn = document.getElementById('capture-face');
+  const startBtn = document.getElementById('start-camera');
+  const resetBtn = document.getElementById('reset-captures');
+  const submitBtn = document.getElementById('signup-submit');
+  let stream = null;
+  let samples = [];
+
+  function updateSamples() {
+    samplesField.value = JSON.stringify(samples);
+    count.textContent = `${samples.length} / 3`;
+    progress.style.width = `${Math.min(samples.length / 3, 1) * 100}%`;
+    captureBtn.disabled = !stream || samples.length >= 3;
+    status.textContent = samples.length >= 3 ? 'Three face samples captured. You can create your account.' : `Camera ready. Capture ${3 - samples.length} more sample(s).`;
+  }
+  function stopCamera() {
+    if (stream) stream.getTracks().forEach(track => track.stop());
+    stream = null;
+    video.srcObject = null;
+    video.classList.add('hidden');
+    captureBtn.disabled = true;
+  }
+  startBtn.addEventListener('click', async () => {
+    try {
+      if (!navigator.mediaDevices?.getUserMedia) throw new Error('Camera requires HTTPS or localhost.');
+      if (!stream) {
+        stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } }, audio: false });
+        video.srcObject = stream;
+        video.classList.remove('hidden');
+        await new Promise(resolve => { if (video.readyState >= 1) resolve(); else video.onloadedmetadata = resolve; });
+        await video.play();
+      }
+      status.textContent = 'Camera ready. Position your face in the frame, then capture three samples.';
+      captureBtn.disabled = samples.length >= 3;
+    } catch (err) {
+      status.textContent = `Could not access camera: ${err.message}`;
+      stopCamera();
+    }
+  });
+  captureBtn.addEventListener('click', () => {
+    if (!stream || !video.videoWidth || samples.length >= 3) return;
+    const canvas = document.createElement('canvas');
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    samples.push(canvas.toDataURL('image/jpeg', 0.88));
+    updateSamples();
+  });
+  resetBtn.addEventListener('click', () => { samples = []; updateSamples(); });
+  form.addEventListener('submit', (event) => {
+    if (samples.length < 3) {
+      event.preventDefault();
+      status.textContent = 'Please enable the camera and capture all three face samples before registering.';
+      return;
+    }
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'ENROLLING FACE & CREATING ACCOUNT…';
+    stopCamera();
+  });
+  window.addEventListener('beforeunload', stopCamera);
+})();
+</script>
+</body>
+</html>

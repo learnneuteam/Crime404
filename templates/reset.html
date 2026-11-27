@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    <meta charset="UTF-8">
+    <title>CRIME404 - Set New Password</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: { colors: { darkbg: '#E8E9DF', cardbg: '#F5F5EF', bordercolor: '#D3D9CE', accentcyan: '#607763' } }
+            }
+        }
+    </script>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/theme.css') }}">
+</head>
+<body class="bg-darkbg text-slate-200 font-sans min-h-screen flex items-center justify-center p-4">
+
+    <div class="w-full max-w-md bg-cardbg border border-bordercolor rounded-xl p-8 shadow-2xl">
+        <div class="text-center mb-6">
+            <h2 class="text-xl font-bold text-slate-100 font-mono">Set New Password</h2>
+            <p class="text-xs text-slate-400 mt-1">Enter your new secure password below.</p>
+        </div>
+
+        <form action="/reset-password/{{ token }}" method="POST" class="space-y-4">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <div>
+                <label class="block text-xs font-mono text-slate-400 uppercase mb-2">New Password</label>
+                <input type="password" name="password" required minlength="12" placeholder="Enter new passphrase (min 12 characters)" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3.5 py-2 text-sm text-slate-200 focus:outline-none focus:border-accentcyan">
+            </div>
+
+            <button type="submit" class="w-full bg-accentcyan hover:bg-cyan-600 text-slate-950 font-semibold py-2.5 rounded-lg text-sm transition font-mono tracking-wider">
+                UPDATE PASSWORD
+            </button>
+        </form>
+    </div>
+
+</body>
+</html>
